@@ -40,7 +40,6 @@ static tree_node *transplant(tree_node *t, tree_node *u, tree_node *v) {
   return t;
 }
 
-
 wasm32_t tree_node_count(tree_node *t) {
   if (t == NULL) {
     return 0;
@@ -51,7 +50,7 @@ wasm32_t tree_node_count(tree_node *t) {
 
 // deletes the nth node from the tree, 0-indexed.
 // Nodes are numbered in sorted order, so the very bottom left is 0.
-tree_node *tree_delete_nth(tree_node *t, wasm32_t n) {
+tree_node *tree_delete_nth(tree_node *t, wasm32_t n, void dealloc(void *)) {
   if (t == NULL) return NULL;
 
   wasm32_t count = tree_node_count(t);
@@ -66,11 +65,15 @@ tree_node *tree_delete_nth(tree_node *t, wasm32_t n) {
   }
 
   if (found->left == NULL) {
-    return transplant(t, found, found->right);
+    t = transplant(t, found, found->right);
+    dealloc(found);
+    return t;
   }
 
   if (found->right == NULL) {
-    return transplant(t, found, found->left);
+    t = transplant(t, found, found->left);
+    dealloc(found);
+    return t;
   }
 
   tree_node *y= tree_min(found->right);
@@ -84,6 +87,7 @@ tree_node *tree_delete_nth(tree_node *t, wasm32_t n) {
   y->left = found->left;
   y->left->parent = y;
 
+  dealloc(found);
   return t;
 }
 
@@ -143,11 +147,11 @@ void print_tree(tree_node *t) {
   }
 }
 
-tree_node *tree_destroy(tree_node *t) {
+tree_node *tree_destroy(tree_node *t, void dealloc(void *)) {
   if (t != NULL) {
-    tree_destroy(t->left);
-    tree_destroy(t->right);
-    free(t);
+    tree_destroy(t->left, dealloc);
+    tree_destroy(t->right, dealloc);
+    dealloc(t);
   }
 
   return NULL;
@@ -164,32 +168,32 @@ void tree_sort(tree_node *t, wasm32_array *dest) {
 bool test_delete_nth(void) {
   tree_node *root = NULL;
 
-  root = tree_delete_nth(root, 0);
+  root = tree_delete_nth(root, 0, free);
   if (root != NULL) {
     printf("expected root to be NULL\n");
     goto fail;
   }
 
   root = tree_insert(root, NULL, 10, malloc);
-  root = tree_delete_nth(root, 1);
+  root = tree_delete_nth(root, 1, free);
   if (root == NULL) {
     printf("expected root not to be NULL\n");
     goto fail;
   }
 
-  root = tree_delete_nth(root, 0);
+  root = tree_delete_nth(root, 0, free);
   if (root != NULL) {
     printf("expected root to be NULL\n");
     goto fail;
   }
 
-  root = tree_destroy(root);
+  root = tree_destroy(root, free);
 
   // found->left == NULL
   root = tree_insert(root, NULL, 4, malloc);
   root = tree_insert(root, NULL, 20, malloc);
 
-  root = tree_delete_nth(root, 0);
+  root = tree_delete_nth(root, 0, free);
   if (tree_node_count(root) != 1) {
     printf("expected tree node count == 1\n");
     goto fail;
@@ -200,13 +204,13 @@ bool test_delete_nth(void) {
     goto fail;
   }
 
-  root = tree_destroy(root);
+  root = tree_destroy(root, free);
 
   // found->right == NULL
   root = tree_insert(root, NULL, 40, malloc);
   root = tree_insert(root, NULL, 2, malloc);
 
-  root = tree_delete_nth(root, 1);
+  root = tree_delete_nth(root, 1, free);
   if (tree_node_count(root) != 1) {
     printf("expected tree node count == 1\n");
     goto fail;
@@ -217,14 +221,14 @@ bool test_delete_nth(void) {
     goto fail;
   }
 
-  root = tree_destroy(root);
+  root = tree_destroy(root, free);
 
   // found has 2 children
   root = tree_insert(root, NULL, 10, malloc);
   root = tree_insert(root, NULL, 2, malloc);
   root = tree_insert(root, NULL, 20, malloc);
 
-  root = tree_delete_nth(root, 1);
+  root = tree_delete_nth(root, 1, free);
   if (tree_node_count(root) != 2) {
     printf("expected tree node count == 2\n");
     goto fail;
@@ -243,7 +247,7 @@ bool test_delete_nth(void) {
   return true;
 
 fail:
-  tree_destroy(root);
+  tree_destroy(root, free);
   return false;
 }
 
@@ -260,7 +264,7 @@ bool test_transplant(void) {
   }
 
   // v is aliased into root, so don't double free :)
-  root = tree_destroy(root);
+  root = tree_destroy(root, free);
   v = NULL;
 
   // u->parent == NULL and v != NULL
@@ -272,7 +276,7 @@ bool test_transplant(void) {
     goto fail;
   }
 
-  root = tree_destroy(root);
+  root = tree_destroy(root, free);
   v = NULL;
 
   // u == u->parent->left
@@ -288,7 +292,7 @@ bool test_transplant(void) {
     goto fail;
   }
 
-  root = tree_destroy(root);
+  root = tree_destroy(root, free);
   v = NULL;
 
   // u == u->parent->right
@@ -304,11 +308,11 @@ bool test_transplant(void) {
     goto fail;
   }
 
-  tree_destroy(root);
+  tree_destroy(root, free);
   return true;
 
 fail:
-  tree_destroy(root);
+  tree_destroy(root, free);
   return false;
 }
 
@@ -321,10 +325,10 @@ bool test_delete_regressions(void) {
   root = tree_insert(root, NULL, 4, malloc); // 6
   root = tree_insert(root, NULL, 6, malloc); // 8
 
-  root = tree_delete_nth(root, 1);
+  root = tree_delete_nth(root, 1, free);
 
   int precount = tree_node_count(root);
-  root = tree_delete_nth(root, precount - 1);
+  root = tree_delete_nth(root, precount - 1, free);
   int postcount = tree_node_count(root);
 
   if (precount == postcount) {
@@ -333,6 +337,23 @@ bool test_delete_regressions(void) {
   }
 
   return true;
+}
+
+struct counter {
+  size_t n;
+};
+
+size_t alloc_count = 0;
+size_t dealloc_count = 0;
+
+void *counting_alloc(size_t s) {
+  alloc_count += 1;
+  return malloc(s);
+}
+
+void counting_dealloc(void *p) {
+  dealloc_count += 1;
+  free(p);
 }
 
 bool test_properties(void) {
@@ -351,10 +372,10 @@ bool test_properties(void) {
     wasm32_t count = tree_node_count(root);
 
     if (count == 0 || chance % 2 == 0) {
-      root = tree_insert(root, NULL, chance, malloc);
+      root = tree_insert(root, NULL, chance, counting_alloc);
       insert_count++;
     } else {
-      root = tree_delete_nth(root, chance % count);
+      root = tree_delete_nth(root, chance % count, counting_dealloc);
       delete_count++;
     }
 
@@ -378,6 +399,12 @@ bool test_properties(void) {
         }
       }
     }
+  }
+
+  tree_destroy(root, counting_dealloc);
+  if (alloc_count != dealloc_count) {
+    printf("expected alloc count to equal dealloc count\n");
+    goto fail;
   }
 
   free(sorted.v);

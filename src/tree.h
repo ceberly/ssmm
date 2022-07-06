@@ -19,7 +19,7 @@ typedef struct node {
 } tree_node;
 
 wasm32_t tree_node_count(tree_node *root);
-tree_node *tree_delete_nth(tree_node *root, wasm32_t);
+tree_node *tree_delete_nth(tree_node *root, wasm32_t, void dealloc(void *));
 tree_node *tree_insert(tree_node *root, tree_node *parent,
     wasm32_t, void *alloc(unsigned long));
 
