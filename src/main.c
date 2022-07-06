@@ -6,11 +6,11 @@
 #include "tree.h"
 
 int main(void) {
-  if (test_tree()) {
-    printf("passed.\n");
-    return EXIT_SUCCESS;
-  }
+  if (!test_tree()) goto fail;
 
+  printf("passed.\n");
+  return EXIT_SUCCESS;
+fail:
   printf("failed.\n");
   return EXIT_FAILURE;
 }

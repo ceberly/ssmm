@@ -95,7 +95,7 @@ tree_node *tree_insert(
     tree_node *t,
     tree_node *parent,
     wasm32_t v,
-    void *alloc(unsigned long size))
+    void *alloc(wasm32_t))
 {
   if (t == NULL) {
     t = alloc(1 * sizeof(tree_node)); 
@@ -122,6 +122,10 @@ typedef struct {
   wasm32_t *v;
   size_t len;
 } wasm32_array;
+
+void *malloc32(wasm32_t size) {
+  return malloc((size_t) size);
+}
 
 void print_node(tree_node *t) {
   printf("node (%p):", (void *)t);
@@ -174,7 +178,7 @@ bool test_delete_nth(void) {
     goto fail;
   }
 
-  root = tree_insert(root, NULL, 10, malloc);
+  root = tree_insert(root, NULL, 10, malloc32);
   root = tree_delete_nth(root, 1, free);
   if (root == NULL) {
     printf("expected root not to be NULL\n");
@@ -190,8 +194,8 @@ bool test_delete_nth(void) {
   root = tree_destroy(root, free);
 
   // found->left == NULL
-  root = tree_insert(root, NULL, 4, malloc);
-  root = tree_insert(root, NULL, 20, malloc);
+  root = tree_insert(root, NULL, 4, malloc32);
+  root = tree_insert(root, NULL, 20, malloc32);
 
   root = tree_delete_nth(root, 0, free);
   if (tree_node_count(root) != 1) {
@@ -207,8 +211,8 @@ bool test_delete_nth(void) {
   root = tree_destroy(root, free);
 
   // found->right == NULL
-  root = tree_insert(root, NULL, 40, malloc);
-  root = tree_insert(root, NULL, 2, malloc);
+  root = tree_insert(root, NULL, 40, malloc32);
+  root = tree_insert(root, NULL, 2, malloc32);
 
   root = tree_delete_nth(root, 1, free);
   if (tree_node_count(root) != 1) {
@@ -224,9 +228,9 @@ bool test_delete_nth(void) {
   root = tree_destroy(root, free);
 
   // found has 2 children
-  root = tree_insert(root, NULL, 10, malloc);
-  root = tree_insert(root, NULL, 2, malloc);
-  root = tree_insert(root, NULL, 20, malloc);
+  root = tree_insert(root, NULL, 10, malloc32);
+  root = tree_insert(root, NULL, 2, malloc32);
+  root = tree_insert(root, NULL, 20, malloc32);
 
   root = tree_delete_nth(root, 1, free);
   if (tree_node_count(root) != 2) {
@@ -256,7 +260,7 @@ bool test_transplant(void) {
   tree_node *v = NULL;
 
   // u->parent == NULL and v == NULL
-  root = tree_insert(root, NULL, 10, malloc);
+  root = tree_insert(root, NULL, 10, malloc32);
   root = transplant(root, root, v);
   if (root != NULL || root != v) {
     printf("expected v to be transplanted to root\n");
@@ -268,8 +272,8 @@ bool test_transplant(void) {
   v = NULL;
 
   // u->parent == NULL and v != NULL
-  root = tree_insert(root, NULL, 10, malloc);
-  v = tree_insert(v, NULL, 100, malloc);
+  root = tree_insert(root, NULL, 10, malloc32);
+  v = tree_insert(v, NULL, 100, malloc32);
   root = transplant(root, root, v);
   if (root == NULL || root != v) {
     printf("expected v to be transplanted to root\n");
@@ -280,10 +284,10 @@ bool test_transplant(void) {
   v = NULL;
 
   // u == u->parent->left
-  root = tree_insert(root, NULL, 100, malloc);
-  root = tree_insert(root, NULL, 10, malloc);
+  root = tree_insert(root, NULL, 100, malloc32);
+  root = tree_insert(root, NULL, 10, malloc32);
 
-  v = tree_insert(v, NULL, 1000, malloc); 
+  v = tree_insert(v, NULL, 1000, malloc32);
 
   root = transplant(root, root->left, v);
 
@@ -296,10 +300,10 @@ bool test_transplant(void) {
   v = NULL;
 
   // u == u->parent->right
-  root = tree_insert(root, NULL, 101, malloc);
-  root = tree_insert(root, NULL, 201, malloc);
+  root = tree_insert(root, NULL, 101, malloc32);
+  root = tree_insert(root, NULL, 201, malloc32);
 
-  v = tree_insert(v, NULL, 1001, malloc);
+  v = tree_insert(v, NULL, 1001, malloc32);
 
   root = transplant(root, root->right, v); 
 
@@ -320,10 +324,10 @@ bool test_delete_regressions(void) {
   // fix bugs from property testing
   tree_node *root = NULL;
 
-  root = tree_insert(root, NULL, 5, malloc); // 2
-  root = tree_insert(root, NULL, 7, malloc); // 4
-  root = tree_insert(root, NULL, 4, malloc); // 6
-  root = tree_insert(root, NULL, 6, malloc); // 8
+  root = tree_insert(root, NULL, 5, malloc32); // 2
+  root = tree_insert(root, NULL, 7, malloc32); // 4
+  root = tree_insert(root, NULL, 4, malloc32); // 6
+  root = tree_insert(root, NULL, 6, malloc32); // 8
 
   root = tree_delete_nth(root, 1, free);
 
@@ -346,9 +350,9 @@ struct counter {
 size_t alloc_count = 0;
 size_t dealloc_count = 0;
 
-void *counting_alloc(size_t s) {
+void *counting_alloc(wasm32_t s) {
   alloc_count += 1;
-  return malloc(s);
+  return malloc32(s);
 }
 
 void counting_dealloc(void *p) {
