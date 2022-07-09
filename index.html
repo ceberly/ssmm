@@ -1,8 +1,38 @@
 <!DOCTYPE html>
 
 <html>
+  <head>
+    <style>
+      body {
+        background-color: black;
+      }
+
+      a {
+        color: rgb(200,200,200);
+      }
+
+      a:visited {
+        color: rgb(200,200,200);
+      }
+
+      .label {
+        font-family: monospace;
+        color: rgb(200,200,200);
+        margin-bottom: 20px;
+      }
+    </style>
+  </head>
   <body>
-    <div>hello, world</div>
+    <div class="label">
+      <span><a href="https://github.com/ceberly/ssmm">https://github.com/ceberly/ssmm</a>
+    </div>
+    <div class="label">
+      <span>tree node count:</span>
+      <span id="tree-node-count">0</span>
+    </div>
+    <div class="label">DOOM zone alloctor (<a href="https://github.com/id-Software/DOOM/blob/master/linuxdoom-1.10/z_zone.c">https://github.com/id-Software/DOOM/blob/master/linuxdoom-1.10/z_zone.c</a>)</div>
+    <canvas id="doom-plot" width="1024" height="1024"></canvas>
+
     <script src="index.js"></script>
   </body>
 </html>

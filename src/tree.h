@@ -8,6 +8,7 @@ typedef struct node {
   struct node *left;
   struct node *right;
   struct node *parent;
+  char *meta;
   wasm32_t val;
 } tree_node;
 
