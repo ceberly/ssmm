@@ -169,7 +169,7 @@ void tree_sort(tree_node *t, wasm32_array *dest) {
   }
 }
 
-bool test_delete_nth(void) {
+bool test_tree_delete_nth(void) {
   tree_node *root = NULL;
 
   root = tree_delete_nth(root, 0, free);
@@ -255,7 +255,7 @@ fail:
   return false;
 }
 
-bool test_transplant(void) {
+bool test_tree_transplant(void) {
   tree_node *root = NULL;
   tree_node *v = NULL;
 
@@ -320,7 +320,7 @@ fail:
   return false;
 }
 
-bool test_delete_regressions(void) {
+bool test_tree_delete_regressions(void) {
   // fix bugs from property testing
   tree_node *root = NULL;
 
@@ -360,7 +360,7 @@ void counting_dealloc(void *p) {
   free(p);
 }
 
-bool test_properties(void) {
+bool test_tree_properties(void) {
   size_t n_iter = 10000;
   int32_t *sorted_v = calloc(n_iter, sizeof(int32_t));
   wasm32_array sorted = { .v = sorted_v, .len = 0 };
@@ -421,10 +421,10 @@ fail:
 }
 
 bool test_tree(void) {
-  if (!test_transplant()) return false;
-  if (!test_delete_nth()) return false;
-  if (!test_delete_regressions()) return false;
-  if (!test_properties()) return false;
+  if (!test_tree_transplant()) return false;
+  if (!test_tree_delete_nth()) return false;
+  if (!test_tree_delete_regressions()) return false;
+  if (!test_tree_properties()) return false;
 
   return true;
 }

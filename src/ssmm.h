@@ -8,6 +8,8 @@
 #define NULL 0
 #endif
 
+#define MEMORY_SIZE 1024 * 1024 // 1 MB
+
 typedef int32_t wasm32_t;
 
 //XXX: does this need to be extern ?

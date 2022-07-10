@@ -4,9 +4,11 @@
 #include <stdio.h>
 
 #include "tree.h"
+#include "kandr.h"
 
 int main(void) {
   if (!test_tree()) goto fail;
+  if (!test_kandr()) goto fail;
 
   printf("passed.\n");
   return EXIT_SUCCESS;

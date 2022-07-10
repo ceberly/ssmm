@@ -3,7 +3,7 @@
 #include "doom.h"
 #include "tree.h"
 
-extern unsigned char *doom_buffer;
+unsigned char doom_buffer[MEMORY_SIZE];
 
 static void *doom_alloc(wasm32_t size) {
   return Z_Malloc(size, PU_STATIC, NULL);
@@ -13,18 +13,14 @@ static void doom_free(void *p) {
   Z_Free(p);
 }
 
-
 void I_Error(char *error, ...) {
   console_log(-1);
   return;
 }
 
-// XXX: is unsigned char * correct here?
 void doom_init(unsigned char *memory, wasm32_t mem_size)
 {
-  // The pointer from wasm comes in as the index 0, which is treated as NULL,
-  // which causes everything to stop immediately. So start at 1 :)
-  Z_Init(memory, mem_size);
+  Z_Init(doom_buffer, MEMORY_SIZE);
 }
 
 tree_node *doom_tick(wasm32_t chance) {
